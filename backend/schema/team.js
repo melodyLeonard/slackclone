@@ -6,7 +6,14 @@ export default `
     channel: [Channel!]!
   }
 
+  type teamResponse {
+    admin: User!
+    members: [User!]!
+    ok: Boolean!
+    errors: [Error!]
+  }
+
   type Mutation {
-    createTeam(name: String!): Boolean!
+    createTeam(name: String!, owner:Int!): teamResponse!
   }
 `;
