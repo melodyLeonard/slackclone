@@ -32,7 +32,11 @@ export default (sequelize, DataTypes) => {
           msg: "The password needs to be between 5 and 200 characters long"
         }
       }
-    }
+    },
+    isAdmin: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
   });
 
   User.associate = models => {

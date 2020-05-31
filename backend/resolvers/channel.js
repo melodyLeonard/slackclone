@@ -1,15 +1,25 @@
 import { requireAuth } from "../permissions";
+import { formatErrors } from "../formatErrors";
 
 export default {
+  Query: {
+    singleChannel: (parent, args, { models }) => models.Channel.findOne({ where: args }),
+    allChannels: (parent, args, { models }) => models.Channel.findAll()
+  },
   Mutation: {
     createChannel: requireAuth.createResolver(
       async (parent, args, { models }) => {
         try {
-          await models.Channel.create(args);
-          return true;
+          const channel = await models.Channel.create(args);
+          return {
+            ok: true,
+            channel
+          };
         } catch (err) {
-          console.error(err);
-          return false;
+          return {
+            ok: false,
+            errors: formatErrors(err, models)
+          };
         }
       }
     )

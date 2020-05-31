@@ -1,4 +1,8 @@
 export default `
+  enum UserType {
+    ADMIN_USER
+    REGULAR_USER
+  }
 
   type User {
     id: Int!
@@ -18,6 +22,7 @@ export default `
     user: User
     errors: [Error!]
   }
+  
 
   type LoginResponse {
     ok: Boolean!
