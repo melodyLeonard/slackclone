@@ -9,7 +9,7 @@ export default {
   Subscription: {
     newChannelMessage: {
       subcribe: withFilter(
-        () => PubSub.asyncIterator(NEW_CHANNEL_MESSAGE),
+        () => pubsub.asyncIterator(NEW_CHANNEL_MESSAGE),
         (payload, args) => payload.channelId === args.channelId
       )
     }
