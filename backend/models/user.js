@@ -37,6 +37,10 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       defaultValue: false
     },
+    confirmed: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    }
   });
 
   User.associate = models => {

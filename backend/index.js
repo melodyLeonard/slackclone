@@ -2,7 +2,7 @@ import express from "express";
 import { createServer} from 'http';
 import bodyParser from 'body-parser'
 import {graphqlExpress, graphiqlExpress} from 'graphql-server-express'
-// import { ApolloServer } from "apollo-server-express";
+import { ApolloServer } from "apollo-server-express";
 import { SubscriptionServer } from "subscriptions-transport-ws";
 import { execute, subscribe } from "graphql";
 import { makeExecutableSchema} from 'graphql-tools'
@@ -60,90 +60,102 @@ app.use(addUser);
 
 const graphqlEndpoint = '/graphql'
 
-app.use(
-  graphqlEndpoint, 
-  bodyParser.json(), 
-  graphqlExpress(req => ({
-    schema,
-    context: {
-      models,
-      user: {id:1},
-      SECRET,
-      SECRET2,
-    }
-})))
-
-const server = createServer(app)
-
-app.use('/graphiql', graphiqlExpress({
-  endpointURL: graphqlEndpoint,
-  subscriptionsEndpoint: `ws://localhost:4000/subscriptions`
-}))
-
-
-try {
-  models.sequelize.sync({force:true}).then(() => {
-    server.listen(4000, () => {
-     new SubscriptionServer({
-       schema,
-       execute,
-       subscribe,
-        onConnect: async({token, refreshToken}, webSocket) => {
-          if (token && refreshToken) {
-            let user = null
-                try {
-      const payload = jwt.verify(token, SECRET);
-      user = payload.user
-    } catch (err) {
-      const newTokens = await refreshTokens(token, refreshToken, models, SECRET, SECRET2);
-      user = newTokens.user
-      req.user = newTokens.user;
-    }
-    if(!user){
-      throw new Error('Invalid auth tokens')
-    }
-      return true
-          }
-          throw new Error('Missing auth tokens!')
-}
-     }, {
-        server,
-        path: '/subscriptions'
-     })
-    });
-  });
-} catch (err) {
-  console.error(err.message);
-}
-
-
-
-// const server = new ApolloServer({
-//   typeDefs,
-//   resolvers,
-//   context: {
-//     models,
-//     SECRET,
-//     SECRET2,
-//     user: {
-//       id: 1
+// app.use(
+//   graphqlEndpoint, 
+//   bodyParser.json(), 
+//   graphqlExpress(req => ({
+//     schema,
+//     context: {
+//       models,
+//       user: {id:1},
+//       SECRET,
+//       SECRET2,
 //     }
-//   }
-// });
+// })))
 
+// const server = createServer(app)
 
-// server.applyMiddleware({
-//   app
-// });
+// app.use('/graphiql', graphiqlExpress({
+//   endpointURL: graphqlEndpoint,
+//   subscriptionsEndpoint: `ws://localhost:4000/subscriptions`
+// }))
 
 
 // try {
-//   models.sequelize.sync({}).then(() => {
-//     app.listen(4000, () => {
-//       console.log(`Server on port http://localhost:4000${server.graphqlPath}`);
-//     });
+//   models.sequelize.sync({force:true}).then(() => {
+//     server.listen(4000, () => {
+//      new SubscriptionServer({
+//        schema,
+//        execute,
+//        subscribe,
+        // onConnect: async({token, refreshToken}, webSocket) => {
+        //   if (token && refreshToken) {
+        //     let user = null
+        //         try {
+        //       const payload = jwt.verify(token, SECRET);
+        //       user = payload.user
+        //     } catch (err) {
+        //       const newTokens = await refreshTokens(token, refreshToken, models, SECRET, SECRET2);
+        //       user = newTokens.user
+        //       req.user = newTokens.user;
+        //     }
+        //     if(!user){
+        //       throw new Error('Invalid auth tokens')
+        //     }
+        //       return true
+        //           }
+        //           throw new Error('Missing auth tokens!')
+        // }
+    //  }, {
+    //     server,
+    //     path: '/subscriptions'
+    //  })
+    // });
 //   });
 // } catch (err) {
 //   console.error(err.message);
 // }
+
+
+
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+  context: {
+    models,
+    SECRET,
+    SECRET2,
+    user: {
+      id: 1
+    }
+  },
+  subscriptions:{
+    onConnect: () => console.log('user subscribed')
+  }
+});
+
+
+server.applyMiddleware({
+  app
+});
+
+
+const httpServer = createServer(app);
+server.installSubscriptionHandlers(httpServer);
+
+const PORT = process.env.PORT || 4000
+
+try {
+  models.sequelize.sync({}).then(() => {
+    // app.listen(4000, () => {
+    //   console.log(`Server on port http://localhost:4000${server.graphqlPath}`);
+    // });
+    httpServer.listen(PORT, () => {
+      console.log(`🚀 Server ready at http://localhost:${PORT}${server.graphqlPath}`)
+      console.log(`🚀 Subscriptions ready at ws://localhost:${PORT}${server.subscriptionsPath}`)
+    })
+  });
+} catch (err) {
+  console.error(err.message);
+}
 
